@@ -9,7 +9,23 @@ when isMainModule:
 
 type
   Section* = ref object
-    hadleLine*, title* :string
+    hadleLine*, title*: string
 
-proc parseDMI* (source: string) : Table[string, Section] = 
-  return initTable[string, Section]()
+proc parseDMI*(source: string): Table[string, Section] =
+  var sections = initTable[string, Section]()
+  let lines = source.splitLines()
+  var s: Section = nil
+  var isNextTitle = false
+  for line in lines:
+    if line.isEmptyOrWhitespace:
+      continue
+    if line.startsWith("Handle"):
+      s = new Section
+      s.hadleLine = line
+      isNextTitle = true
+      continue
+    if isNextTitle:
+      s.title = line
+      continue
+  sections[s.title] = s
+  return sections
