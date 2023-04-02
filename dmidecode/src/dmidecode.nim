@@ -6,26 +6,43 @@ import sequtils, tables, strutils
 when isMainModule:
   echo("Hello, World!")
 
+type Property* = ref object
+  val*: string
+  items*: seq[string]
 
 type
   Section* = ref object
     hadleLine*, title*: string
+    props*: Table[string, Property]
+
+type ParseState = enum
+  noOp, sectionName, readKeyValue
 
 proc parseDMI*(source: string): Table[string, Section] =
   var sections = initTable[string, Section]()
   let lines = source.splitLines()
   var s: Section = nil
-  var isNextTitle = false
+  var state: ParseState = noOp
   for line in lines:
     if line.isEmptyOrWhitespace:
       continue
     if line.startsWith("Handle"):
       s = new Section
       s.hadleLine = line
-      isNextTitle = true
+      s.props = initTable[string, Property]()
+      state = sectionName
       continue
-    if isNextTitle:
+    if state == sectionName:
       s.title = line
+      state = readKeyValue
+      continue
+    if state == readKeyValue:
+      let kv = line.strip().split(':')
+      if kv.len == 2:
+        let key = kv[0].strip()
+        let value = kv[1].strip()
+        s.props[key] = new Property
+        s.props[key].val = value
       continue
   sections[s.title] = s
   return sections

@@ -4,6 +4,7 @@ import ../src/dmidecode
 let sample = """
 Handle 0x0000, DMI type 0, 24 bytes
 BIOS Information
+    Vendor: LENOVO
 """
 
 var obj: Table[string, dmidecode.Section]
@@ -13,3 +14,6 @@ check obj.len == 1
 check obj.hasKey("BIOS Information")
 check obj["BIOS Information"].title == "BIOS Information"
 check obj["BIOS Information"].hadleLine == "Handle 0x0000, DMI type 0, 24 bytes"
+
+check obj["BIOS Information"].props.len == 1
+check obj["BIOS Information"].props["Vendor"].val == "LENOVO"
