@@ -16,13 +16,14 @@ type
     props*: Table[string, Property]
 
 type ParseState = enum
-  noOp, sectionName, readKeyValue
+  noOp, sectionName, readKeyValue, readList
 
 proc parseDMI*(source: string): Table[string, Section] =
   var sections = initTable[string, Section]()
   let lines = source.splitLines()
   var s: Section = nil
   var state: ParseState = noOp
+  var key: string
   for line in lines:
     if line.isEmptyOrWhitespace:
       continue
@@ -39,10 +40,16 @@ proc parseDMI*(source: string): Table[string, Section] =
     if state == readKeyValue:
       let kv = line.strip().split(':')
       if kv.len == 2:
-        let key = kv[0].strip()
+        key = kv[0].strip()
         let value = kv[1].strip()
         s.props[key] = new Property
+        if value.isEmptyOrWhitespace():
+          state = readList
+          continue
         s.props[key].val = value
+      continue
+    if state == readList:
+      s.props[key].items.add(line.strip())
       continue
   sections[s.title] = s
   return sections
